@@ -161,4 +161,28 @@ export default class Database {
         });
     });
   }
+  updateToDo(id, item) {
+    return new Promise(resolve => {
+      this.initDB()
+        .then(db => {
+          db.transaction(tx => {
+            tx.executeSql(
+              'UPDATE ToDo SET ToDoName = ?, ToDoDesc = ? WHERE ToDoId = ?',
+              [item.ToDoName, item.ToDoDesc, id],
+            ).then(([tx, results]) => {
+              resolve(results);
+            });
+          })
+            .then(result => {
+              this.closeDatabase(db);
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    });
+  }
 }
