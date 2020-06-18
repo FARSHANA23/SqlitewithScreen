@@ -1,27 +1,98 @@
 import React, {Component} from 'react';
-import {Button, View, Text} from 'react-native';
+import {
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  View,
+  Text,
+} from 'react-native';
+import {ListItem, Button} from 'react-native-elements';
+import Database from '../Database';
+
+const db = new Database();
 
 export default class ToDoScreen extends Component {
-  static navigationOptions = {
-    title: 'ToDoScreen',
+  static navigationOptions = ({navigation}) => {
+    return {
+      title: 'ToDoList',
+      headerRight: (
+        <Button
+          buttonStyle={{padding: 0, backgroundColor: 'transparent'}}
+          icon={{name: 'add-circle', style: {marginRight: 0, fontSize: 28}}}
+          onPress={() => {
+            navigation.navigate('AddToDo', {
+              onNavigateBack: this.handleOnNavigateBack,
+            });
+          }}
+        />
+      ),
+    };
   };
+  constructor() {
+    super();
+    this.state = {
+      isLoading: true,
+      items: [],
+      notFound: 'items not found.\nPlease click (+) button to add it.',
+    };
+  }
+  componentDidMount() {
+    this._subscribe = this.props.navigation.addListener('didFocus', () => {
+      this.getitems();
+    });
+  }
+  getitems() {
+    let items = [];
+    db.listToDo()
+      .then(data => {
+        items = data;
+        this.setState({
+          items,
+          isLoading: false,
+        });
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState = {
+          isLoading: false,
+        };
+      });
+  }
+  keyExtractor = (item, index) => index.toString();
+  renderItem = ({item}) => (
+    <ListItem
+      title={item.prodName}
+      onPress={() => {
+        this.props.navigation.navigate('ToDoDetails', {
+          ToDoId: `${item.ToDoId}`,
+        });
+      }}
+      chevron
+      bottomDivider
+    />
+  );
   render() {
+    if (this.state.isLoading) {
+      return (
+        <View style={styles.activity}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
+    }
+    if (this.state.items.length === 0) {
+      return (
+        <View>
+          <Text style={styles.message}>{this.state.notFound}</Text>
+        </View>
+      );
+    }
+
     return (
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        <Text>ToDoScreen</Text>
-        <Button
-          title="Go to TODO List  Details"
-          onPress={() => this.props.navigation.navigate('ToDoDetails')}
-        />
-        <Button
-          title="Go to Add item in a TODO list"
-          onPress={() => this.props.navigation.navigate('AddToDo')}
-        />
-        <Button
-          title="Go to Edit item in TODO List"
-          onPress={() => this.props.navigation.navigate('ToDoEdit')}
-        />
-      </View>
+      <FlatList
+        keyExtractor={this.keyExtractor}
+        data={this.state.items}
+        renderItem={this.renderItem}
+      />
     );
   }
 }
