@@ -108,4 +108,57 @@ export default class Database {
         });
     });
   }
+  getToDoId(id) {
+    console.log(id);
+    return new Promise(resolve => {
+      this.initDB()
+        .then(db => {
+          db.transaction(tx => {
+            tx.executeSql('SELECT * FROM ToDo WHERE ToDoId = ?', [id]).then(
+              ([tx, results]) => {
+                console.log(results);
+                if (results.rows.length > 0) {
+                  let row = results.rows.item(0);
+                  resolve(row);
+                }
+              },
+            );
+          })
+            .then(result => {
+              this.closeDatabase(db);
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    });
+  }
+  additem(item) {
+    return new Promise(resolve => {
+      this.initDB()
+        .then(db => {
+          db.transaction(tx => {
+            tx.executeSql('INSERT INTO ToDo VALUES (?, ?, ?)', [
+              item.ToDoId,
+              item.ToDoName,
+              item.ToDoDesc,
+            ]).then(([tx, results]) => {
+              resolve(results);
+            });
+          })
+            .then(result => {
+              this.closeDatabase(db);
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    });
+  }
 }
