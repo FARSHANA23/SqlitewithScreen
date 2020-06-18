@@ -1,27 +1,124 @@
 import React, {Component} from 'react';
-import {Button, View, Text} from 'react-native';
+import {
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  View,
+  TextInput,
+} from 'react-native';
+import {Button} from 'react-native-elements';
+import Database from '../Database';
+
+const db = new Database();
 
 export default class AddToDo extends Component {
   static navigationOptions = {
     title: 'Add item to ToDo',
   };
+  constructor() {
+    super();
+    this.state = {
+      ToDoId: '',
+      ToDoName: '',
+      ToDoDesc: '',
+      isLoading: false,
+    };
+  }
+  updateTextInput = (text, field) => {
+    const state = this.state;
+    state[field] = text;
+    this.setState(state);
+  };
+  saveToDo() {
+    this.setState({
+      isLoading: true,
+    });
+    let data = {
+      ToDoId: this.state.ToDoId,
+      ToDoName: this.state.ToDoName,
+      ToDoDesc: this.state.ToDoDesc,
+    };
+    db.additem(data)
+      .then(result => {
+        console.log(result);
+        this.setState({
+          isLoading: false,
+        });
+        this.props.navigation.state.params.onNavigateBack;
+        this.props.navigation.goBack();
+      })
+      .catch(err => {
+        console.log(err);
+        this.setState({
+          isLoading: false,
+        });
+      });
+  }
+
   render() {
+    if (this.state.isLoading) {
+      return (
+        <View style={styles.activity}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
+      );
+    }
     return (
-      <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        <Text>Add item ToDo</Text>
-        <Button
-          title="Go to Add ToDo... again"
-          onPress={() => this.props.navigation.push('AddToDo')}
-        />
-        <Button
-          title="Go to Main page"
-          onPress={() => this.props.navigation.navigate('ToDoScreen')}
-        />
-        <Button
-          title="Go back"
-          onPress={() => this.props.navigation.goBack()}
-        />
-      </View>
+      <ScrollView style={styles.container}>
+        <View style={styles.subContainer}>
+          <TextInput
+            placeholder={'ToDo ID'}
+            value={this.state.ToDoId}
+            onChangeText={text => this.updateTextInput(text, 'ToDoId')}
+          />
+        </View>
+        <View style={styles.subContainer}>
+          <TextInput
+            placeholder={'ToDo Name'}
+            value={this.state.ToDoName}
+            onChangeText={text => this.updateTextInput(text, 'ToDoName')}
+          />
+        </View>
+        <View style={styles.subContainer}>
+          <TextInput
+            multiline={true}
+            numberOfLines={4}
+            placeholder={'ToDo Description'}
+            value={this.state.ToDoDesc}
+            onChangeText={text => this.updateTextInput(text, 'ToDoDesc')}
+          />
+        </View>
+        <View style={styles.button}>
+          <Button
+            large
+            leftIcon={{name: 'save'}}
+            title="Save"
+            onPress={() => this.saveToDo()}
+          />
+        </View>
+      </ScrollView>
     );
   }
 }
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  subContainer: {
+    flex: 1,
+    marginBottom: 20,
+    padding: 5,
+    borderBottomWidth: 2,
+    borderBottomColor: '#CCCCCC',
+  },
+  activity: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
