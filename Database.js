@@ -185,4 +185,28 @@ export default class Database {
         });
     });
   }
+  deleteitem(id) {
+    return new Promise(resolve => {
+      this.initDB()
+        .then(db => {
+          db.transaction(tx => {
+            tx.executeSql('DELETE FROM ToDo WHERE ToDoId = ?', [id]).then(
+              ([tx, results]) => {
+                console.log(results);
+                resolve(results);
+              },
+            );
+          })
+            .then(result => {
+              this.closeDatabase(db);
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    });
+  }
 }
