@@ -56,4 +56,56 @@ export default class Database {
         });
     });
   }
+  closeDatabase(db) {
+    if (db) {
+      console.log('Closing DB');
+      db.close()
+        .then(status => {
+          console.log('Database CLOSED');
+        })
+        .catch(error => {
+          this.errorCB(error);
+        });
+    } else {
+      console.log('Database was not OPENED');
+    }
+  }
+  listToDo() {
+    return new Promise(resolve => {
+      const Todoitems = [];
+      this.initDB()
+        .then(db => {
+          db.transaction(tx => {
+            tx.executeSql('SELECT p.ToDoId, p.ToDoName FROM ToDo p', []).then(
+              ([tx, results]) => {
+                console.log('sql statement  completed');
+                var len = results.rows.length;
+                for (let i = 0; i < len; i++) {
+                  let row = results.rows.item(i);
+                  console.log(
+                    `TODO ID: ${row.ToDoId}, TODO Name: ${row.ToDoName}`,
+                  );
+                  const {ToDoId, ToDoName} = row;
+                  Todoitems.push({
+                    ToDoId,
+                    ToDoName,
+                  });
+                }
+                console.log(Todoitems);
+                resolve(Todoitems);
+              },
+            );
+          })
+            .then(result => {
+              this.closeDatabase(db);
+            })
+            .catch(err => {
+              console.log(err);
+            });
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    });
+  }
 }
